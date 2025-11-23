@@ -59,4 +59,17 @@ class InMemoryTokenRepository implements TokenRepositoryInterface
             return !$token['date_added']->addSeconds($this->expires)->isPast();
         });
     }
+
+    public function recentlyCreatedToken(CanResetPasswordContract $user)
+    {
+        $record = $this->tokens->get($user->getEmailForPasswordReset());
+
+        return $record && $this->tokenRecentlyCreated($record['date_added']);
+    }
+
+    protected function tokenRecentlyCreated($createdAt)
+    {
+        $throttle = 60; // Default throttle time in seconds
+        return Carbon::parse($createdAt)->diffInSeconds(Carbon::now()) < $throttle;
+    }
 }

@@ -17,7 +17,7 @@ class InMemoryTokenRepositoryTest extends TestCase
      */
     private $user;
 
-    public function setUp()
+    public function setUp(): void
     {
         parent::setUp();
         $this->repository = new InMemoryTokenRepository(1);
@@ -64,6 +64,30 @@ class InMemoryTokenRepositoryTest extends TestCase
 
         self::assertFalse($this->repository->exists($this->user, $token1));
         self::assertFalse($this->repository->exists($user2, $token2));
+    }
+
+    public function testRecentlyCreatedTokenReturnsTrueForNewToken()
+    {
+        $this->repository->create($this->user);
+
+        self::assertTrue($this->repository->recentlyCreatedToken($this->user));
+    }
+
+    public function testRecentlyCreatedTokenReturnsFalseWhenNoToken()
+    {
+        self::assertFalse($this->repository->recentlyCreatedToken($this->user));
+    }
+
+    public function testRecentlyCreatedTokenReturnsFalseAfterThrottle()
+    {
+        $repository = new InMemoryTokenRepository(1);
+        $repository->create($this->user);
+
+        self::assertTrue($repository->recentlyCreatedToken($this->user));
+
+        sleep(61); // Wait longer than the 60 second throttle
+
+        self::assertFalse($repository->recentlyCreatedToken($this->user));
     }
 
     /**
